@@ -2,6 +2,8 @@ import { Canvas } from '@react-three/fiber';
 import { KeyboardControls } from '@react-three/drei';
 import { MainScene } from './three/scenes/MainScene';
 import { useGameStore } from './store/useGameStore';
+import { useInteractionStore } from './store/useInteractionStore';
+import { useEffect } from 'react';
 
 const keyboardMap = [
   { name: 'forward', keys: ['ArrowUp', 'KeyW'] },
@@ -9,11 +11,26 @@ const keyboardMap = [
   { name: 'left', keys: ['ArrowLeft', 'KeyA'] },
   { name: 'right', keys: ['ArrowRight', 'KeyD'] },
   { name: 'run', keys: ['Shift'] },
+  { name: 'interact', keys: ['KeyE'] },
 ];
 
 function UI() {
   const playerState = useGameStore((state) => state.playerState);
   const currentLocationName = useGameStore((state) => state.currentLocationName);
+
+  const activeId = useInteractionStore(state => state.activeInteractableId);
+  const interactables = useInteractionStore(state => state.registeredInteractables);
+  const feedbackMessage = useInteractionStore(state => state.feedbackMessage);
+  const setFeedbackMessage = useInteractionStore(state => state.setFeedbackMessage);
+
+  const activeItem = activeId ? interactables[activeId] : null;
+
+  useEffect(() => {
+    if (feedbackMessage) {
+      const t = setTimeout(() => setFeedbackMessage(null), 4000);
+      return () => clearTimeout(t);
+    }
+  }, [feedbackMessage, setFeedbackMessage]);
 
   return (
     <div className="absolute top-0 left-0 w-full h-full pointer-events-none flex flex-col justify-between p-6 overflow-hidden">
@@ -33,6 +50,35 @@ function UI() {
         </div>
       </div>
 
+      {/* Feedback Message */}
+      <div className="absolute top-24 left-1/2 transform -translate-x-1/2 z-50">
+        <div className={`transition-all duration-500 ${feedbackMessage ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+          {feedbackMessage && (
+            <div className="bg-amber-900/80 text-amber-100 px-6 py-2 rounded border border-amber-500/50 backdrop-blur-md shadow-lg text-center font-light tracking-wider">
+              {feedbackMessage}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Interaction Prompt */}
+      <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 z-50">
+        <div className={`transition-all duration-300 ${activeItem ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+          {activeItem && (
+            <div className="bg-black/70 text-white px-6 py-3 rounded-lg border border-amber-500/30 backdrop-blur-sm shadow-lg flex items-center">
+              <span className="bg-amber-500 text-black font-bold px-2 py-1 rounded text-sm mr-3">E</span>
+              <span className="tracking-wide">{activeItem.prompt}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Pointer Lock Overlay */}
+      <div className="absolute top-4 right-4 bg-black/50 px-4 py-2 rounded text-white text-xs border border-white/20 text-right z-50">
+        <span className="opacity-70">Click game to lock camera</span><br/>
+        <span className="opacity-70">ESC to unlock</span>
+      </div>
+
       <div className="flex justify-between items-end w-full">
         <div className="bg-black/40 p-4 rounded-lg backdrop-blur-sm border border-white/10">
           <p className="text-white text-sm mb-2 font-semibold">Controls</p>
@@ -41,6 +87,8 @@ function UI() {
             <span>Move</span>
             <span>Shift</span>
             <span>Run</span>
+            <span>E</span>
+            <span>Interact</span>
           </div>
         </div>
 

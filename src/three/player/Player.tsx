@@ -2,14 +2,16 @@ import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useKeyboardControls } from '@react-three/drei';
 import * as THREE from 'three';
-import { PLAYER_CONFIG, CAMERA_CONFIG, WORLD_CONFIG } from '../config/constants';
+import { PLAYER_CONFIG, WORLD_CONFIG } from '../config/constants';
 import { LOCATIONS } from '../config/locations';
 import { useGameStore } from '../../store/useGameStore';
+import { useInteractionStore } from '../../store/useInteractionStore';
+import { CameraController } from '../camera/CameraController';
+import { cameraState } from '../../store/cameraState';
+import { resolveCollision } from '../physics/CollisionSystem';
 
 // Reusable vectors to avoid instantiation in useFrame
 const currentPosition = new THREE.Vector3();
-const currentLookAt = new THREE.Vector3();
-const targetCameraPos = new THREE.Vector3();
 const moveDirection = new THREE.Vector3();
 const locationVec = new THREE.Vector3();
 
@@ -20,7 +22,7 @@ export function Player() {
   const setPlayerState = useGameStore((state) => state.setPlayerState);
   const setCurrentLocation = useGameStore((state) => state.setCurrentLocation);
 
-  useFrame((state, delta) => {
+  useFrame((_, delta) => {
     if (!groupRef.current) return;
     const { forward, backward, left, right, run } = getKeys();
     
@@ -39,12 +41,16 @@ export function Player() {
       
       const speed = run ? PLAYER_CONFIG.runSpeed : PLAYER_CONFIG.walkSpeed;
       
-      groupRef.current.position.addScaledVector(moveDirection, speed * delta);
+      const cameraYaw = cameraState.yaw;
+      const moveX = moveDirection.x * Math.cos(cameraYaw) + moveDirection.z * Math.sin(cameraYaw);
+      const moveZ = -moveDirection.x * Math.sin(cameraYaw) + moveDirection.z * Math.cos(cameraYaw);
       
-      groupRef.current.position.x = THREE.MathUtils.clamp(groupRef.current.position.x, -WORLD_CONFIG.bounds, WORLD_CONFIG.bounds);
-      groupRef.current.position.z = THREE.MathUtils.clamp(groupRef.current.position.z, -WORLD_CONFIG.bounds, WORLD_CONFIG.bounds);
-
-      const targetAngle = Math.atan2(moveDirection.x, moveDirection.z);
+      const finalMove = new THREE.Vector3(moveX, 0, moveZ);
+      finalMove.normalize();
+      
+      groupRef.current.position.addScaledVector(finalMove, speed * delta);
+      
+      const targetAngle = Math.atan2(finalMove.x, finalMove.z);
       
       let currentAngle = groupRef.current.rotation.y;
       let diff = targetAngle - currentAngle;
@@ -54,23 +60,17 @@ export function Player() {
       groupRef.current.rotation.y += diff * Math.min(PLAYER_CONFIG.rotationSpeed * delta, 1);
     }
 
+    resolveCollision(groupRef.current.position, 0.5);
+
+    groupRef.current.position.x = THREE.MathUtils.clamp(groupRef.current.position.x, -WORLD_CONFIG.bounds, WORLD_CONFIG.bounds);
+    groupRef.current.position.z = THREE.MathUtils.clamp(groupRef.current.position.z, -WORLD_CONFIG.bounds, WORLD_CONFIG.bounds);
+
     if (useGameStore.getState().playerState !== newState) {
       setPlayerState(newState);
     }
 
-    // Camera follow logic
+    // Camera logic moved to CameraController
     currentPosition.copy(groupRef.current.position);
-    
-    targetCameraPos.copy(currentPosition).add(
-      new THREE.Vector3(CAMERA_CONFIG.offset[0], CAMERA_CONFIG.offset[1], CAMERA_CONFIG.offset[2])
-    );
-    
-    state.camera.position.lerp(targetCameraPos, CAMERA_CONFIG.lerpSpeed * delta);
-    
-    currentLookAt.copy(currentPosition).add(
-      new THREE.Vector3(CAMERA_CONFIG.lookAtOffset[0], CAMERA_CONFIG.lookAtOffset[1], CAMERA_CONFIG.lookAtOffset[2])
-    );
-    state.camera.lookAt(currentLookAt);
 
     // Location detection
     let closestLoc = null;
@@ -95,18 +95,41 @@ export function Player() {
         setCurrentLocation(null, null);
       }
     }
+
+    // Interaction detection
+    const interactables = useInteractionStore.getState().registeredInteractables;
+    let closestInteractableId = null;
+    let minInteractableDist = Infinity;
+
+    for (const key in interactables) {
+      const item = interactables[key];
+      locationVec.set(item.position[0], item.position[1], item.position[2]);
+      const dist = currentPosition.distanceTo(locationVec);
+      if (dist <= item.radius && dist < minInteractableDist) {
+        closestInteractableId = item.id;
+        minInteractableDist = dist;
+      }
+    }
+
+    const currentActiveId = useInteractionStore.getState().activeInteractableId;
+    if (currentActiveId !== closestInteractableId) {
+      useInteractionStore.getState().setActiveInteractableId(closestInteractableId);
+    }
   });
 
   return (
-    <group ref={groupRef} position={[0, 0, 40]}>
-      <mesh position={[0, 1, 0]} castShadow receiveShadow>
-        <capsuleGeometry args={[0.5, 1, 4, 8]} />
-        <meshStandardMaterial color="#8a9a5b" />
-      </mesh>
-      <mesh position={[0, 1.5, -0.5]} castShadow>
-        <boxGeometry args={[0.2, 0.2, 0.5]} />
-        <meshStandardMaterial color="#333333" />
-      </mesh>
-    </group>
+    <>
+      <CameraController target={groupRef} />
+      <group ref={groupRef} position={[0, 0, 40]}>
+        <mesh position={[0, 1, 0]} castShadow receiveShadow>
+          <capsuleGeometry args={[0.5, 1, 4, 8]} />
+          <meshStandardMaterial color="#8a9a5b" />
+        </mesh>
+        <mesh position={[0, 1.5, -0.5]} castShadow>
+          <boxGeometry args={[0.2, 0.2, 0.5]} />
+          <meshStandardMaterial color="#333333" />
+        </mesh>
+      </group>
+    </>
   );
 }

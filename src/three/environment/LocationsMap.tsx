@@ -1,10 +1,56 @@
 import { Tent, RuinColumn, StonePath, ExcavationZone, RuinedHouse, TempleStructure, PalaceRuins, BurialStructure, MarketStall, Rock, TunnelEntrance, EntranceSign, DirtMound } from './Structures';
+import { Interactable } from '../components/Interactable';
+import { ColliderBox } from '../physics/ColliderBox';
+import { useInteractionStore } from '../../store/useInteractionStore';
+import { useState } from 'react';
+
+function TempleGate({ position }: { position: [number, number, number] }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const setFeedback = useInteractionStore(state => state.setFeedbackMessage);
+
+  return (
+    <>
+      <group position={position}>
+        <mesh position={[-2, 1.5, 0]} rotation={[0, isOpen ? -Math.PI / 2 : 0, 0]} castShadow>
+          <boxGeometry args={[4, 3, 0.4]} />
+          <meshStandardMaterial color="#4a3628" />
+          {!isOpen && <ColliderBox args={[4, 0.4]} />}
+        </mesh>
+        <mesh position={[2, 1.5, 0]} rotation={[0, isOpen ? Math.PI / 2 : 0, 0]} castShadow>
+          <boxGeometry args={[4, 3, 0.4]} />
+          <meshStandardMaterial color="#4a3628" />
+          {!isOpen && <ColliderBox args={[4, 0.4]} />}
+        </mesh>
+      </group>
+      <Interactable 
+        id="temple_gate"
+        position={position}
+        radius={5}
+        prompt={isOpen ? "Close Temple Gate" : "Open Temple Gate"}
+        onInteract={() => {
+          setIsOpen(!isOpen);
+          setFeedback(isOpen ? "Temple gate closed." : "Temple gate opened. The path is clear.");
+        }}
+        highlightOffset={[0, 3.5, 0]}
+      />
+    </>
+  );
+}
 
 export function LocationsMap() {
+  const setFeedback = useInteractionStore(state => state.setFeedbackMessage);
+
   return (
     <group>
       {/* Foreground/Entrance Details (0, 0, 40) */}
       <EntranceSign position={[0, 0, 43]} />
+      <Interactable
+        id="entrance_sign"
+        position={[0, 0, 43]}
+        radius={4}
+        prompt="Inspect Entrance Sign"
+        onInteract={() => setFeedback("ArchaeoMind Excavation Site. Authorized personnel only.")}
+      />
       <StonePath position={[0, 0, 35]} scale={[1, 1, 3]} />
       <DirtMound position={[-4, 0, 38]} scale={2} />
       <DirtMound position={[5, 0, 41]} scale={1.5} />
@@ -13,6 +59,14 @@ export function LocationsMap() {
       
       {/* Camp (0, 0, 20) */}
       <Tent position={[-5, 0, 15]} color="#7a8b7d" /> {/* Command Tent */}
+      <Interactable
+        id="camp_command"
+        position={[-5, 0, 15]}
+        radius={5}
+        prompt="Enter Command Tent"
+        onInteract={() => setFeedback("Command tent is locked. The site director is currently away.")}
+        highlightOffset={[0, 3, 0]}
+      />
       {/* Storage Area */}
       <mesh position={[5, 0.5, 15]} castShadow><boxGeometry args={[2, 1, 2]}/><meshStandardMaterial color="#8b7355" /></mesh>
       <mesh position={[5, 1.5, 15]} castShadow><boxGeometry args={[1.5, 1, 1.5]}/><meshStandardMaterial color="#7a6245" /></mesh>
@@ -32,6 +86,13 @@ export function LocationsMap() {
       <BurialStructure position={[-28, 0, -24]} rotation={-0.1} />
       <BurialStructure position={[-35, 0, -22]} rotation={0.4} />
       <Rock position={[-27, 0, -19]} scale={1.5} />
+      <Interactable
+        id="burial_marker"
+        position={[-27, 0, -19]}
+        radius={4}
+        prompt="Inspect Stone Marker"
+        onInteract={() => setFeedback("The stone bears heavily weathered inscriptions. Translating... 'Resting place of the elders.'")}
+      />
       <DirtMound position={[-31, 0, -21]} scale={1.2} />
 
       {/* Marketplace (-30, 0, -40) */}
@@ -41,6 +102,7 @@ export function LocationsMap() {
       <StonePath position={[-29, 0, -38]} scale={[1.5, 1, 1]} rotation={[0, -0.4, 0]} />
 
       {/* Temple (0, 0, -40) */}
+      <TempleGate position={[0, 0, -30]} />
       <TempleStructure position={[0, 0, -40]} />
       <StonePath position={[0, 0, -30]} scale={[1.2, 1, 1.5]} />
       <DirtMound position={[8, 0, -38]} scale={3} />

@@ -1,8 +1,13 @@
 // No React imports needed
+import { ColliderBox } from '../physics/ColliderBox';
 
 export function Tent({ position, rotation = 0, color = "#dcd3b6" }: { position: [number, number, number], rotation?: number, color?: string }) {
   return (
     <group position={position} rotation={[0, rotation, 0]}>
+      {/* Wall Colliders */}
+      <group position={[0, 0, -1.8]}><ColliderBox args={[4, 0.5]} /></group>
+      <group position={[-1.8, 0, 0]}><ColliderBox args={[0.5, 4]} /></group>
+      <group position={[1.8, 0, 0]}><ColliderBox args={[0.5, 4]} /></group>
       {/* Main tent body */}
       <mesh position={[0, 1.5, 0]} rotation={[Math.PI / 2, 0, Math.PI / 2]} castShadow receiveShadow>
         <cylinderGeometry args={[2, 2, 4, 3]} />
@@ -48,7 +53,12 @@ export function AncientWall({ position, length = 6, rotation = 0 }: { position: 
       );
     }
   }
-  return <group position={position} rotation={[0, rotation, 0]}>{blocks}</group>;
+  return (
+    <group position={position} rotation={[0, rotation, 0]}>
+      <ColliderBox args={[length, 1]} />
+      {blocks}
+    </group>
+  );
 }
 
 export function StonePath({ position, scale = [1, 1, 1], rotation = [0, 0, 0] }: { position: [number, number, number], scale?: [number, number, number], rotation?: [number, number, number] }) {
@@ -140,10 +150,13 @@ export function TempleStructure({ position }: { position: [number, number, numbe
       <RuinColumn position={[7, 1, 0]} height={6} />
       <RuinColumn position={[7, 1, 5]} height={2} />
       <AncientWall position={[0, 1, -6]} length={14} />
-      <mesh position={[0, 1.5, 0]} castShadow>
-        <boxGeometry args={[3, 1, 2]} />
-        <meshStandardMaterial color="#a09d98" />
-      </mesh>
+      <group position={[0, 1.5, 0]}>
+        <ColliderBox args={[3, 2]} />
+        <mesh castShadow>
+          <boxGeometry args={[3, 1, 2]} />
+          <meshStandardMaterial color="#a09d98" />
+        </mesh>
+      </group>
       <Rock position={[0, 2.2, 0]} scale={0.5} />
     </group>
   );
@@ -215,10 +228,13 @@ export function Rock({ position, scale = 1 }: { position: [number, number, numbe
   const seed = Math.abs(position[0] * 73.1 + position[2] * 37.9);
   const rotation = [(seed % 2) * Math.PI, ((seed * 1.3) % 2) * Math.PI, 0] as [number, number, number];
   return (
-    <mesh position={position} scale={[scale, scale * 0.8, scale * 1.2]} rotation={rotation} castShadow receiveShadow>
-      <dodecahedronGeometry args={[1, 0]} />
-      <meshStandardMaterial color="#968f86" roughness={1} />
-    </mesh>
+    <group position={position} rotation={rotation}>
+      <ColliderBox args={[scale * 1.5, scale * 1.5]} />
+      <mesh scale={[scale, scale * 0.8, scale * 1.2]} castShadow receiveShadow>
+        <dodecahedronGeometry args={[1, 0]} />
+        <meshStandardMaterial color="#968f86" roughness={1} />
+      </mesh>
+    </group>
   );
 }
 
