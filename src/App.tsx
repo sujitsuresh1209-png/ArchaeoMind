@@ -13,15 +13,27 @@ const keyboardMap = [
 
 function UI() {
   const playerState = useGameStore((state) => state.playerState);
+  const currentLocationName = useGameStore((state) => state.currentLocationName);
 
   return (
-    <div className="absolute top-0 left-0 w-full h-full pointer-events-none flex flex-col justify-between p-6">
-      <div className="text-white drop-shadow-md">
-        <h1 className="text-2xl font-bold uppercase tracking-widest text-amber-50">ArchaeoMind</h1>
-        <p className="text-sm text-amber-200/80">Phase 1: Foundation</p>
+    <div className="absolute top-0 left-0 w-full h-full pointer-events-none flex flex-col justify-between p-6 overflow-hidden">
+      <div className="flex justify-between items-start w-full">
+        <div className="text-white drop-shadow-md">
+          <h1 className="text-2xl font-bold uppercase tracking-widest text-amber-50">ArchaeoMind</h1>
+          <p className="text-sm text-amber-200/80">Phase 2: 3D Archaeological World</p>
+        </div>
       </div>
       
-      <div className="flex justify-between items-end">
+      {/* Location Announcer */}
+      <div className="absolute top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex justify-center items-center">
+        <div className={`transition-opacity duration-1000 ${currentLocationName ? 'opacity-100' : 'opacity-0'}`}>
+          <h2 className="text-4xl font-light tracking-[0.2em] text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] uppercase text-center">
+            {currentLocationName || 'Wasteland'}
+          </h2>
+        </div>
+      </div>
+
+      <div className="flex justify-between items-end w-full">
         <div className="bg-black/40 p-4 rounded-lg backdrop-blur-sm border border-white/10">
           <p className="text-white text-sm mb-2 font-semibold">Controls</p>
           <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-300">
