@@ -6,6 +6,7 @@ import { PLAYER_CONFIG, WORLD_CONFIG } from '../config/constants';
 import { LOCATIONS } from '../config/locations';
 import { useGameStore } from '../../store/useGameStore';
 import { useInteractionStore } from '../../store/useInteractionStore';
+import { useInventoryStore } from '../../store/useInventoryStore';
 import { CameraController } from '../camera/CameraController';
 import { cameraState } from '../../store/cameraState';
 import { resolveCollision } from '../physics/CollisionSystem';
@@ -24,6 +25,10 @@ export function Player() {
 
   useFrame((_, delta) => {
     if (!groupRef.current) return;
+    
+    const isUIOpen = useInventoryStore.getState().isOpen || useInventoryStore.getState().worldInspectItem !== null;
+    if (isUIOpen) return;
+
     const { forward, backward, left, right, run } = getKeys();
     
     // Movement logic

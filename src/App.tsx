@@ -3,7 +3,10 @@ import { KeyboardControls } from '@react-three/drei';
 import { MainScene } from './three/scenes/MainScene';
 import { useGameStore } from './store/useGameStore';
 import { useInteractionStore } from './store/useInteractionStore';
+import { useInventoryStore } from './store/useInventoryStore';
 import { useEffect } from 'react';
+import { InventoryPanel } from './components/inventory/InventoryPanel';
+import { WorldInspectPanel } from './components/inventory/WorldInspectPanel';
 
 const keyboardMap = [
   { name: 'forward', keys: ['ArrowUp', 'KeyW'] },
@@ -12,6 +15,7 @@ const keyboardMap = [
   { name: 'right', keys: ['ArrowRight', 'KeyD'] },
   { name: 'run', keys: ['Shift'] },
   { name: 'interact', keys: ['KeyE'] },
+  { name: 'inventory', keys: ['KeyI'] },
 ];
 
 function UI() {
@@ -32,12 +36,27 @@ function UI() {
     }
   }, [feedbackMessage, setFeedbackMessage]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'KeyI' && !e.repeat) {
+        useInventoryStore.getState().toggleInventory();
+      }
+      if (e.code === 'Escape' && !e.repeat) {
+        const store = useInventoryStore.getState();
+        if (store.isOpen) store.closeInventory();
+        if (store.worldInspectItem) store.closeWorldInspect();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
     <div className="absolute top-0 left-0 w-full h-full pointer-events-none flex flex-col justify-between p-6 overflow-hidden">
       <div className="flex justify-between items-start w-full">
         <div className="text-white drop-shadow-md">
           <h1 className="text-2xl font-bold uppercase tracking-widest text-amber-50">ArchaeoMind</h1>
-          <p className="text-sm text-amber-200/80">Phase 2: 3D Archaeological World</p>
+          <p className="text-sm text-amber-200/80">3D Archaeological Exploration</p>
         </div>
       </div>
       
@@ -96,6 +115,9 @@ function UI() {
           <span className="text-xs text-gray-300 uppercase tracking-wider">State: <span className="text-amber-300 font-bold">{playerState}</span></span>
         </div>
       </div>
+      
+      <InventoryPanel />
+      <WorldInspectPanel />
     </div>
   );
 }

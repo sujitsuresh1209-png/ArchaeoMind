@@ -2,6 +2,7 @@ import { Tent, RuinColumn, StonePath, ExcavationZone, RuinedHouse, TempleStructu
 import { Interactable } from '../components/Interactable';
 import { ColliderBox } from '../physics/ColliderBox';
 import { useInteractionStore } from '../../store/useInteractionStore';
+import { ArtifactPlacement } from '../artifacts/ArtifactPlacement';
 import { useState } from 'react';
 
 function TempleGate({ position }: { position: [number, number, number] }) {
@@ -42,6 +43,8 @@ export function LocationsMap() {
 
   return (
     <group>
+      <ArtifactPlacement />
+      
       {/* Foreground/Entrance Details (0, 0, 40) */}
       <EntranceSign position={[0, 0, 43]} />
       <Interactable
