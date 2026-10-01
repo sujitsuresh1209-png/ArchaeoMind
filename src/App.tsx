@@ -7,6 +7,7 @@ import { useInventoryStore } from './store/useInventoryStore';
 import { useEffect } from 'react';
 import { InventoryPanel } from './components/inventory/InventoryPanel';
 import { WorldInspectPanel } from './components/inventory/WorldInspectPanel';
+import { EconomyHUD } from './components/ui/EconomyHUD';
 
 const keyboardMap = [
   { name: 'forward', keys: ['ArrowUp', 'KeyW'] },
@@ -58,6 +59,14 @@ function UI() {
           <h1 className="text-2xl font-bold uppercase tracking-widest text-amber-50">ArchaeoMind</h1>
           <p className="text-sm text-amber-200/80">3D Archaeological Exploration</p>
         </div>
+        
+        <div className="flex flex-col items-end space-y-2 pointer-events-none">
+          <EconomyHUD />
+          <div className="bg-black/50 px-3 py-1.5 rounded text-white text-[10px] border border-white/20 text-right pointer-events-auto">
+            <span className="opacity-70">Click game to lock camera</span><br/>
+            <span className="opacity-70">ESC to unlock</span>
+          </div>
+        </div>
       </div>
       
       {/* Location Announcer */}
@@ -92,11 +101,7 @@ function UI() {
         </div>
       </div>
 
-      {/* Pointer Lock Overlay */}
-      <div className="absolute top-4 right-4 bg-black/50 px-4 py-2 rounded text-white text-xs border border-white/20 text-right z-50">
-        <span className="opacity-70">Click game to lock camera</span><br/>
-        <span className="opacity-70">ESC to unlock</span>
-      </div>
+      {/* Pointer Lock Overlay moved to top bar */}
 
       <div className="flex justify-between items-end w-full">
         <div className="bg-black/40 p-4 rounded-lg backdrop-blur-sm border border-white/10">
